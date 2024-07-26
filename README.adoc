@@ -7,3 +7,9 @@ ifdef::env-github[]
 endif::[]
 
 Runner application for interfacing with https://amplify.security[Amplify Security]'s platform from continuous integration environments.
+
+=== Building
+
+```
+cargo build --release --target=x86_64-unknown-linux-musl
+```

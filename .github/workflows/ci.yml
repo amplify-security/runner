@@ -1,0 +1,65 @@
+---
+name: CI
+
+"on":
+  pull_request:
+  push:
+    branches: ["main"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+  # For Github OIDC integration tests:
+  id-token: write
+
+jobs:
+  rustfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - run: rustup --version
+      - uses: actions/checkout@v4
+      - run: cargo fmt --all -- --check
+
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: rustup --version
+      - uses: actions/checkout@v4
+      - name: Check for common mistakes with Clippy
+        run: cargo clippy --all-targets --all-features -- -Dclippy::all
+
+  typos:
+    runs-on: ubuntu-latest
+    steps:
+      - run: rustup --version
+      - uses: actions/checkout@v4
+      - name: Check source for typos and spelling issues
+        uses: crate-ci/typos@320b5781474d4470a36b7f0626b131e99850e9d2  # v1.23.2
+
+  cargo_audit:
+    runs-on: ubuntu-latest
+    steps:
+      - run: rustup --version
+      - uses: actions/checkout@v4
+      - name: Check for security advisories
+        run: cargo audit
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: rustup --version
+      - name: Cache Cargo registry and dependencies
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84  # v2.7.3
+      - uses: actions/checkout@v4
+      - name: cargo generate-lockfile
+        if: hashFiles('Cargo.lock') == ''
+        run: cargo generate-lockfile
+      - name: cargo test --locked
+        run: cargo test --locked --all-features
