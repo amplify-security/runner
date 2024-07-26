@@ -1,0 +1,9 @@
+= amplify-runner
+:toc:
+:toc-placement: preamble
+ifdef::env-github[]
+:tip-caption: :bulb:
+:warning-caption: :warning:
+endif::[]
+
+Runner application for interfacing with https://amplify.security[Amplify Security]'s platform from continuous integration environments.
