@@ -6,7 +6,8 @@ RUN apk add --no-cache musl-dev
 
 COPY Cargo.toml Cargo.lock ./
 COPY src ./src/
-RUN cargo build --release
+RUN cargo build --release --locked
+RUN strip ./target/release/amplify-runner
 
 FROM alpine:3.20.2
 
