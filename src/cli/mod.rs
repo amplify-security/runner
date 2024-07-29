@@ -2,6 +2,8 @@ use bpaf::*;
 use color_eyre::eyre::Result;
 use std::str::FromStr;
 
+const DEFAULT_AMPLIFY_ENDPOINT: &str = "https://api.amplify.security";
+
 #[derive(Debug, Clone)]
 pub struct RunnerArgs {
     pub ci: Option<ExecutionEnvironment>,
@@ -31,13 +33,14 @@ pub fn init() -> RunnerArgs {
     }
 
     if args.endpoint.is_none() {
-        args.endpoint = Some("https://api.amplify.security".to_string());
+        args.endpoint =
+            Some(std::env::var("AMPLIFY_ENDPOINT").unwrap_or(DEFAULT_AMPLIFY_ENDPOINT.to_owned()));
     }
 
     args
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum ExecutionEnvironment {
     Github,
     //Gitlab,
