@@ -19,4 +19,5 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
+          readme-filepath: ./README.adoc
           repository: amplifysecurity/runner
