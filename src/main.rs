@@ -23,9 +23,9 @@ async fn main() -> Result<ExitCode> {
         .install()?;
 
     let args = cli::init();
-    let endpoint = args.endpoint.expect("Couldn't find endpoint.");
+    let endpoint = args.endpoint.clone().unwrap();
 
-    if let Some(ci) = args.ci {
+    if let Some(ci) = args.ci.clone() {
         let provider_token = match ci {
             cli::ExecutionEnvironment::Github => {
                 let mut provider = auth::github::GithubAuth::new(endpoint.to_owned())
@@ -41,9 +41,19 @@ async fn main() -> Result<ExitCode> {
                 return Err(eyre!("This CI environment is currently unsupported."))
             }
         };
-        let mut amplify_auth = auth::amplify::AmplifyAuth::new(endpoint.to_owned(), provider_token)
-            .wrap_err("Failed to setup AmplifyAuth provider.")?;
-        let _amplify_token = amplify_auth.get_token().await?;
+        let amplify_token: String = if ci == cli::ExecutionEnvironment::Local {
+            // No integration exists between this runner and the Amplify API to
+            // test against locally generated JWTs, so this is a placeholder
+            // for now.
+            "local amplify token".to_owned()
+        } else {
+            let mut amplify_auth =
+                auth::amplify::AmplifyAuth::new(endpoint.to_owned(), provider_token)
+                    .wrap_err("Failed to setup AmplifyAuth provider.")?;
+            amplify_auth.get_token().await?
+        };
+        // Placeholder to consume it/superfically check if it's issued.
+        println!("size of amplify token: {:?}", amplify_token.len());
     } else {
         println!("CI environment is unknown! You may need to specify one via --ci.");
         return Ok(ExitCode::FAILURE);
