@@ -43,6 +43,6 @@ impl AmplifyAuth {
             return Ok(self.jwt.clone().unwrap());
         }
 
-        Err(eyre!("Failed to mint a run token from Amplify."))
+        Err(eyre!("Failed to mint a run token from Amplify. Please ensure that this repository is configured in Amplify."))
     }
 }

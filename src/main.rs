@@ -6,6 +6,7 @@
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use std::process::ExitCode;
 
+pub(crate) mod amplify;
 pub(crate) mod auth;
 pub(crate) mod cli;
 
@@ -54,6 +55,8 @@ async fn main() -> Result<ExitCode> {
         };
         // Placeholder to consume it/superfically check if it's issued.
         println!("size of amplify token: {:?}", amplify_token.len());
+        let config = amplify::get_config(endpoint, amplify_token).await?;
+        println!("{:?}", config);
     } else {
         println!("CI environment is unknown! You may need to specify one via --ci.");
         return Ok(ExitCode::FAILURE);
