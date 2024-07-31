@@ -56,7 +56,16 @@ async fn main() -> Result<ExitCode> {
             amplify_auth.get_token().await?
         };
 
-        let config = amplify::get_config(endpoint, amplify_token).await?
+        let config = if ci == cli::ExecutionEnvironment::Local {
+            amplify::AmplifyConfigResponse {
+                tools: vec![amplify::Tools::Uname],
+                merge_comments_enabled: false,
+                merge_approvals_enabled: false,
+                deleted: false,
+            }
+        } else {
+            amplify::get_config(endpoint, amplify_token).await?
+        };
 
         let tool = Tool::new_from(config.tools[0]);
         tool.setup().await?;

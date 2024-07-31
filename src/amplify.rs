@@ -1,6 +1,7 @@
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
+use tokio::process::Command;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AmplifyConfigResponse {
@@ -14,6 +15,7 @@ pub struct AmplifyConfigResponse {
 #[serde(rename_all = "UPPERCASE")]
 pub enum Tools {
     Semgrep,
+    Uname,
 }
 
 pub async fn get_config(endpoint: String, token: String) -> Result<AmplifyConfigResponse> {
@@ -50,12 +52,14 @@ pub trait ToolActions {
 #[enum_dispatch]
 pub enum Tool {
     Semgrep,
+    Uname,
 }
 
 impl Tool {
     pub fn new_from(tool: Tools) -> Tool {
         match tool {
             Tools::Semgrep => Tool::Semgrep(Semgrep {}),
+            Tools::Uname => Tool::Uname(Uname {}),
         }
     }
 }
@@ -63,12 +67,30 @@ impl Tool {
 #[derive(Debug, Default)]
 pub struct Semgrep {}
 
+#[derive(Debug, Default)]
+pub struct Uname {}
+
 impl ToolActions for Semgrep {
     async fn setup(&self) -> Result<()> {
         Ok(())
     }
 
     async fn launch(&self) -> Result<()> {
+        Ok(())
+    }
+}
+
+impl ToolActions for Uname {
+    async fn setup(&self) -> Result<()> {
+        println!("Attempted setup function for uname.");
+        Ok(())
+    }
+
+    async fn launch(&self) -> Result<()> {
+        let uname = Command::new("uname").args(["-a"]).spawn()?;
+        println!("Pushed off request for uname.");
+        uname.wait_with_output().await?;
+        println!("Finished running uname.");
         Ok(())
     }
 }
