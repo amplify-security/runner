@@ -5,22 +5,17 @@ name: Amplify Security
   workflow_dispatch: {}
   push:
     branches: ["main"]
+
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   amplify-security-scan:
     runs-on: ubuntu-latest
-    container:
-      image: returntocorp/semgrep
-    if: (github.actor != 'dependabot[bot]')
     steps:
-      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744  # v3
-      - run: semgrep ci --config auto --json > amplify-sast.json || true
-        env:
-          SEMGREP_RULES: >-
-            p/security-audit
-            p/secrets
-      # do not modify this step
-      - uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32  # v3
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
+      - name: Run Amplify Security Scan (Lab)
+        uses: amplify-security/runner-action@main
         with:
-          name: amplify-scan
-          path: amplify-sast.json
-          retention-days: 7
+          amplify-endpoint: https://api.lab.amplify.security
