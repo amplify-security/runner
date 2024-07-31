@@ -1,7 +1,9 @@
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
+use std::process::Stdio;
 use tokio::process::Command;
+// use tokio::select;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AmplifyConfigResponse {
@@ -72,10 +74,39 @@ pub struct Uname {}
 
 impl ToolActions for Semgrep {
     async fn setup(&self) -> Result<()> {
+        for cmd in [
+            vec!["apk", "add", "python3", "py3-pip"],
+            vec!["mkdir", "/semgrep"],
+            vec!["python", "-m", "venv", "/semgrep"],
+            vec!["/semgrep/bin/pip", "install", "semgrep"],
+        ]
+        .into_iter()
+        {
+            let cmd_full = cmd.join(" ");
+            println!("::group::{}", cmd_full);
+            println!("RUN: {:?}\n", cmd_full);
+            let mut process = Command::new(cmd[0])
+                .args(&cmd[1..])
+                .spawn()
+                .expect("Failed to launch process.");
+            process.wait().await?;
+            println!("::endgroup::");
+        }
+
+        println!("Completed semgrep installation.");
         Ok(())
     }
 
     async fn launch(&self) -> Result<()> {
+        let semgrep_scan = Command::new("/semgrep/bin/semgrep")
+            .args(["ci", "--config", "auto", "--json", "--oss-only"])
+            .env("SEMGREP_RULES", ["p/security-audit", "p/secrets"].join(" "))
+            .stdout(Stdio::piped())
+            .spawn()
+            .expect("Failed to start Semgrep scan.");
+
+        println!("Started Semgrep scan.");
+        semgrep_scan.wait_with_output().await?;
         Ok(())
     }
 }
