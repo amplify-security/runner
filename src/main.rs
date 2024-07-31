@@ -6,8 +6,11 @@
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use std::process::ExitCode;
 
+pub(crate) mod amplify;
 pub(crate) mod auth;
 pub(crate) mod cli;
+
+use crate::amplify::{Tool, ToolActions};
 
 #[tokio::main]
 async fn main() -> Result<ExitCode> {
@@ -52,8 +55,23 @@ async fn main() -> Result<ExitCode> {
                     .wrap_err("Failed to setup AmplifyAuth provider.")?;
             amplify_auth.get_token().await?
         };
-        // Placeholder to consume it/superfically check if it's issued.
-        println!("size of amplify token: {:?}", amplify_token.len());
+
+        let config = if ci == cli::ExecutionEnvironment::Local {
+            amplify::AmplifyConfigResponse {
+                tools: vec![amplify::Tools::Uname],
+                merge_comments_enabled: false,
+                merge_approvals_enabled: false,
+                deleted: false,
+            }
+        } else {
+            amplify::get_config(endpoint, amplify_token).await?
+        };
+
+        for tool_name in config.tools.into_iter() {
+            let tool = Tool::new_from(tool_name);
+            tool.setup().await?;
+            tool.launch().await?;
+        }
     } else {
         println!("CI environment is unknown! You may need to specify one via --ci.");
         return Ok(ExitCode::FAILURE);

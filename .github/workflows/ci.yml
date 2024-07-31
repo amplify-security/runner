@@ -24,14 +24,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: rustup --version
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332   # v4.1.7
       - run: cargo fmt --all -- --check
 
   clippy:
     runs-on: ubuntu-latest
     steps:
       - run: rustup --version
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332   # v4.1.7
       - name: Check for common mistakes with Clippy
         run: cargo clippy --all-targets --all-features -- -Dclippy::all
 
@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: rustup --version
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332   # v4.1.7
       - name: Check source for typos and spelling issues
         uses: crate-ci/typos@320b5781474d4470a36b7f0626b131e99850e9d2  # v1.23.2
 
@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: rustup --version
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332   # v4.1.7
       - name: Check for security advisories
         run: cargo audit
 
@@ -57,9 +57,23 @@ jobs:
       - run: rustup --version
       - name: Cache Cargo registry and dependencies
         uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84  # v2.7.3
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332   # v4.1.7
       - name: cargo generate-lockfile
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
       - name: cargo test --locked
         run: cargo test --locked --all-features
+
+  run:
+    needs: ["test"]
+    runs-on: ubuntu-latest
+    steps:
+      - run: rustup --version
+      - name: Cache Cargo registry and dependencies
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84  # v2.7.3
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332   # v4.1.7
+      - name: cargo generate-lockfile
+        if: hashFiles('Cargo.lock') == ''
+        run: cargo generate-lockfile
+      - name: cargo run
+        run: cargo run --locked -- --endpoint https://api.lab.amplify.security
