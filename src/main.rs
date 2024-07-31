@@ -10,6 +10,8 @@ pub(crate) mod amplify;
 pub(crate) mod auth;
 pub(crate) mod cli;
 
+use crate::amplify::{Tool, ToolActions};
+
 #[tokio::main]
 async fn main() -> Result<ExitCode> {
     // Initializes error summary handler with support for directing end users
@@ -53,10 +55,12 @@ async fn main() -> Result<ExitCode> {
                     .wrap_err("Failed to setup AmplifyAuth provider.")?;
             amplify_auth.get_token().await?
         };
-        // Placeholder to consume it/superfically check if it's issued.
-        println!("size of amplify token: {:?}", amplify_token.len());
-        let config = amplify::get_config(endpoint, amplify_token).await?;
-        println!("{:?}", config);
+
+        let config = amplify::get_config(endpoint, amplify_token).await?
+
+        let tool = Tool::new_from(config.tools[0]);
+        tool.setup().await?;
+        tool.launch().await?;
     } else {
         println!("CI environment is unknown! You may need to specify one via --ci.");
         return Ok(ExitCode::FAILURE);
