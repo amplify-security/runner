@@ -67,9 +67,11 @@ async fn main() -> Result<ExitCode> {
             amplify::get_config(endpoint, amplify_token).await?
         };
 
-        let tool = Tool::new_from(config.tools[0]);
-        tool.setup().await?;
-        tool.launch().await?;
+        for tool_name in config.tools.into_iter() {
+            let tool = Tool::new_from(tool_name);
+            tool.setup().await?;
+            tool.launch().await?;
+        }
     } else {
         println!("CI environment is unknown! You may need to specify one via --ci.");
         return Ok(ExitCode::FAILURE);
