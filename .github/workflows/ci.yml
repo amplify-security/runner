@@ -63,17 +63,3 @@ jobs:
         run: cargo generate-lockfile
       - name: cargo test --locked
         run: cargo test --locked --all-features
-
-  run:
-    needs: ["test"]
-    runs-on: ubuntu-latest
-    steps:
-      - run: rustup --version
-      - name: Cache Cargo registry and dependencies
-        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84  # v2.7.3
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332   # v4.1.7
-      - name: cargo generate-lockfile
-        if: hashFiles('Cargo.lock') == ''
-        run: cargo generate-lockfile
-      - name: cargo run
-        run: cargo run --locked -- --endpoint https://api.lab.amplify.security
