@@ -20,6 +20,19 @@ pub enum Tools {
     Uname,
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum ArtifactType {
+    Json,
+}
+
+impl ArtifactType {
+    fn as_str(&self) -> &'static str {
+        match self {
+            ArtifactType::Json => "application/json",
+        }
+    }
+}
+
 pub async fn get_config(endpoint: String, token: String) -> Result<AmplifyConfigResponse> {
     let client = reqwest::Client::new();
     let res = client
@@ -27,7 +40,7 @@ pub async fn get_config(endpoint: String, token: String) -> Result<AmplifyConfig
         .bearer_auth(&token)
         .send()
         .await
-        .wrap_err("Failed to complete request for a run token from Amplify.")?;
+        .wrap_err("Failed to complete request for project configuration from Amplify.")?;
     if res.status().is_success() {
         let mut config_data = res
             .json::<AmplifyConfigResponse>()
@@ -42,6 +55,30 @@ pub async fn get_config(endpoint: String, token: String) -> Result<AmplifyConfig
 
     Err(eyre!(
         "Received a non-successful HTTP response when requesting project configuration."
+    ))
+}
+
+pub async fn submit_artifact(
+    endpoint: String,
+    token: String,
+    artifact: String,
+    artifact_type: ArtifactType,
+) -> Result<()> {
+    let client = reqwest::Client::new();
+    let res = client
+        .put(format!("{url}/v1.0/artifact", url = &endpoint))
+        .header(reqwest::header::CONTENT_TYPE, artifact_type.as_str())
+        .bearer_auth(&token)
+        .body(artifact)
+        .send()
+        .await
+        .wrap_err("Failed to complete request for submitting an artifact to Amplify.")?;
+    if res.status().is_success() {
+        return Ok(());
+    }
+
+    Err(eyre!(
+        "Received a non-successful HTTP response when submitting artifact to Amplify."
     ))
 }
 
