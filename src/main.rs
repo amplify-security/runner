@@ -75,7 +75,7 @@ async fn main() -> Result<ExitCode> {
                 endpoint.to_owned(),
                 amplify_token.to_owned(),
                 tool_output,
-                ArtifactType::JSON,
+                ArtifactType::Json,
             )
             .await?;
         }

@@ -22,13 +22,13 @@ pub enum Tools {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum ArtifactType {
-    JSON,
+    Json,
 }
 
 impl ArtifactType {
     fn as_str(&self) -> &'static str {
         match self {
-            ArtifactType::JSON => "application/json",
+            ArtifactType::Json => "application/json",
         }
     }
 }
