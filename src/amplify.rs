@@ -48,7 +48,7 @@ pub async fn get_config(endpoint: String, token: String) -> Result<AmplifyConfig
 #[enum_dispatch(Tool)]
 pub trait ToolActions {
     async fn setup(&self) -> Result<()>;
-    async fn launch(&self) -> Result<()>;
+    async fn launch(&self) -> Result<String>;
 }
 
 #[enum_dispatch]
@@ -97,17 +97,28 @@ impl ToolActions for Semgrep {
         Ok(())
     }
 
-    async fn launch(&self) -> Result<()> {
+    async fn launch(&self) -> Result<String> {
+        // TODO: Split out command execution grouped output into helper functions
+        println!("::group::semgrep ci (scan job)");
         let semgrep_scan = Command::new("/semgrep/bin/semgrep")
             .args(["ci", "--config", "auto", "--json", "--oss-only"])
             .env("SEMGREP_RULES", ["p/security-audit", "p/secrets"].join(" "))
+            .env("SEMGREP_IN_DOCKER", "1")
+            .env("SEMGREP_USER_AGENT_APPEND", "Docker")
             .stdout(Stdio::piped())
             .spawn()
             .expect("Failed to start Semgrep scan.");
+        println!("Started Semgrep scan: {:?}", semgrep_scan);
 
-        println!("Started Semgrep scan.");
-        semgrep_scan.wait_with_output().await?;
-        Ok(())
+        let result = semgrep_scan.wait_with_output().await?;
+        println!("Finished Semgrep scan.");
+
+        match result.status.code() {
+            Some(code) => println!("Exited with code {}", code),
+            None => println!("Process terminated by signal."),
+        }
+        println!("::endgroup::");
+        String::from_utf8(result.stdout).context("Failed to read stdout from Semgrep.")
     }
 }
 
@@ -117,11 +128,11 @@ impl ToolActions for Uname {
         Ok(())
     }
 
-    async fn launch(&self) -> Result<()> {
+    async fn launch(&self) -> Result<String> {
         let uname = Command::new("uname").args(["-a"]).spawn()?;
         println!("Pushed off request for uname.");
         uname.wait_with_output().await?;
         println!("Finished running uname.");
-        Ok(())
+        Ok("".to_string())
     }
 }
