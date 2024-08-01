@@ -70,7 +70,11 @@ async fn main() -> Result<ExitCode> {
         for tool_name in config.tools.into_iter() {
             let tool = Tool::new_from(tool_name);
             tool.setup().await?;
-            tool.launch().await?;
+            let tool_output = tool.launch().await?;
+            println!(
+                "::group::{:?} output\n{}::endgroup::",
+                tool_name, tool_output
+            );
         }
     } else {
         println!("CI environment is unknown! You may need to specify one via --ci.");
