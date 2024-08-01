@@ -103,6 +103,8 @@ impl ToolActions for Semgrep {
         let semgrep_scan = Command::new("/semgrep/bin/semgrep")
             .args(["ci", "--config", "auto", "--json", "--oss-only"])
             .env("SEMGREP_RULES", ["p/security-audit", "p/secrets"].join(" "))
+            .env("SEMGREP_IN_DOCKER", "1")
+            .env("SEMGREP_USER_AGENT_APPEND", "Docker")
             .stdout(Stdio::piped())
             .spawn()
             .expect("Failed to start Semgrep scan.");
