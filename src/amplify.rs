@@ -3,7 +3,6 @@ use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
 use std::process::Stdio;
 use tokio::process::Command;
-// use tokio::select;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AmplifyConfigResponse {
@@ -23,12 +22,15 @@ pub enum Tools {
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum ArtifactType {
     Json,
+    #[allow(dead_code)]
+    Sarif,
 }
 
 impl ArtifactType {
     fn as_str(&self) -> &'static str {
         match self {
             ArtifactType::Json => "application/json",
+            ArtifactType::Sarif => "application/sarif+json",
         }
     }
 }
@@ -74,6 +76,7 @@ pub async fn submit_artifact(
         .await
         .wrap_err("Failed to complete request for submitting an artifact to Amplify.")?;
     if res.status().is_success() {
+        println!("Successfully submitted tool result to Amplify.");
         return Ok(());
     }
 
@@ -85,7 +88,7 @@ pub async fn submit_artifact(
 #[enum_dispatch(Tool)]
 pub trait ToolActions {
     async fn setup(&self) -> Result<()>;
-    async fn launch(&self) -> Result<String>;
+    async fn launch(&self) -> Result<(ArtifactType, String)>;
 }
 
 #[enum_dispatch]
@@ -134,10 +137,11 @@ impl ToolActions for Semgrep {
         Ok(())
     }
 
-    async fn launch(&self) -> Result<String> {
+    async fn launch(&self) -> Result<(ArtifactType, String)> {
         // TODO: Split out command execution grouped output into helper functions
         println!("::group::semgrep ci (scan job)");
         let semgrep_scan = Command::new("/semgrep/bin/semgrep")
+            // When public-api supports SARIF artifact ingestion, just change --json to --sarif here and update the return type
             .args(["ci", "--config", "auto", "--json", "--oss-only"])
             .env("SEMGREP_RULES", ["p/security-audit", "p/secrets"].join(" "))
             .env("SEMGREP_IN_DOCKER", "1")
@@ -155,7 +159,10 @@ impl ToolActions for Semgrep {
             None => println!("Process terminated by signal."),
         }
         println!("::endgroup::");
-        String::from_utf8(result.stdout).context("Failed to read stdout from Semgrep.")
+        match String::from_utf8(result.stdout).context("Failed to read stdout from Semgrep.") {
+            Ok(out) => Ok((ArtifactType::Json, out)),
+            Err(e) => Err(e),
+        }
     }
 }
 
@@ -165,11 +172,11 @@ impl ToolActions for Uname {
         Ok(())
     }
 
-    async fn launch(&self) -> Result<String> {
+    async fn launch(&self) -> Result<(ArtifactType, String)> {
         let uname = Command::new("uname").args(["-a"]).spawn()?;
         println!("Pushed off request for uname.");
         uname.wait_with_output().await?;
         println!("Finished running uname.");
-        Ok("".to_string())
+        Ok((ArtifactType::Json, "".to_string()))
     }
 }
