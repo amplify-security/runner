@@ -10,7 +10,7 @@ pub(crate) mod amplify;
 pub(crate) mod auth;
 pub(crate) mod cli;
 
-use crate::amplify::{ArtifactType, Tool, ToolActions};
+use crate::amplify::{Tool, ToolActions};
 
 #[tokio::main]
 async fn main() -> Result<ExitCode> {
@@ -70,12 +70,12 @@ async fn main() -> Result<ExitCode> {
         for tool_name in config.tools.into_iter() {
             let tool = Tool::new_from(tool_name);
             tool.setup().await?;
-            let tool_output = tool.launch().await?;
+            let (tool_output_type, tool_output) = tool.launch().await?;
             amplify::submit_artifact(
                 endpoint.to_owned(),
                 amplify_token.to_owned(),
                 tool_output,
-                ArtifactType::Json,
+                tool_output_type,
             )
             .await?;
         }
