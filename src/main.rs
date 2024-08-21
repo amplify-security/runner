@@ -35,6 +35,11 @@ async fn main() -> Result<ExitCode> {
                     .wrap_err("Failed to setup GithubAuth provider")?;
                 provider.get_token().await?
             }
+            cli::ExecutionEnvironment::Gitlab => {
+                let mut provider = auth::gitlab::GitlabAuth::new()
+                    .wrap_err("Failed to setup GitlabAuth provider")?;
+                provider.get_token().await?
+            }
             cli::ExecutionEnvironment::Local => {
                 let mut provider =
                     auth::LocalAuth::new().wrap_err("Failed to setup LocalAuth provider")?;
