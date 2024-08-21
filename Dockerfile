@@ -15,4 +15,4 @@ RUN apk add --no-cache git
 
 COPY --from=builder /usr/src/app/target/release/amplify-runner /usr/bin/amplify-runner
 
-ENTRYPOINT ["/usr/bin/amplify-runner"]
+CMD ["/usr/bin/amplify-runner"]
