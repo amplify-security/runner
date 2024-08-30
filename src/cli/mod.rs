@@ -43,7 +43,7 @@ pub fn init() -> RunnerArgs {
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum ExecutionEnvironment {
     Github,
-    //Gitlab,
+    Gitlab,
     Local,
     Unsupported,
 }
@@ -53,7 +53,7 @@ impl ExecutionEnvironment {
     fn as_str(&self) -> &str {
         match self {
             Self::Github => "github",
-            //Self::Gitlab => "gitlab",
+            Self::Gitlab => "gitlab",
             Self::Local => "local",
             Self::Unsupported => "",
         }
@@ -65,7 +65,7 @@ impl FromStr for ExecutionEnvironment {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "github" => Ok(Self::Github),
-            //"gitlab" => Ok(Self::Gitlab)
+            "gitlab" => Ok(Self::Gitlab),
             "local" => Ok(Self::Local),
             _ => Ok(Self::Unsupported),
         }
@@ -78,8 +78,8 @@ fn identify_ci_from_environment() -> Option<ExecutionEnvironment> {
         return Some(ExecutionEnvironment::Github);
     }
     // https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
-    /*if std::env::var("GITLAB_CI").unwrap_or_default() == "true" {
+    if std::env::var("GITLAB_CI").unwrap_or_default() == "true" {
         return Some(ExecutionEnvironment::Gitlab);
-    }*/
+    }
     None
 }
