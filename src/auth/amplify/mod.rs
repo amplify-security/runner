@@ -27,7 +27,7 @@ impl AmplifyAuth {
     }
 
     pub async fn get_token(&mut self) -> Result<String> {
-        let client = reqwest::Client::new();
+        let client = crate::common::new_http_client();
         let res = client
             .get(format!("{url}/v1.0/auth/jwt", url = &self.endpoint))
             .bearer_auth(&self.provider_token)

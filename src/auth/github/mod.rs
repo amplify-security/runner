@@ -32,7 +32,7 @@ impl GithubAuth {
     }
 
     pub async fn get_token(&mut self) -> Result<String> {
-        let client = reqwest::Client::new();
+        let client = crate::common::new_http_client();
         let res = client
             .get(format!(
                 "{url}&audience={audience}",
