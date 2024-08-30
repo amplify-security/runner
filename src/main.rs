@@ -9,6 +9,7 @@ use std::process::ExitCode;
 pub(crate) mod amplify;
 pub(crate) mod auth;
 pub(crate) mod cli;
+pub(crate) mod common;
 
 use crate::amplify::{Tool, ToolActions};
 

@@ -36,7 +36,7 @@ impl ArtifactType {
 }
 
 pub async fn get_config(endpoint: String, token: String) -> Result<AmplifyConfigResponse> {
-    let client = reqwest::Client::new();
+    let client = crate::common::new_http_client();
     let res = client
         .get(format!("{url}/v1.0/config", url = &endpoint))
         .bearer_auth(&token)
@@ -66,7 +66,7 @@ pub async fn submit_artifact(
     artifact: String,
     artifact_type: ArtifactType,
 ) -> Result<()> {
-    let client = reqwest::Client::new();
+    let client = crate::common::new_http_client();
     let res = client
         .put(format!("{url}/v1.0/artifact", url = &endpoint))
         .header(reqwest::header::CONTENT_TYPE, artifact_type.as_str())
