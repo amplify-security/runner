@@ -9,7 +9,7 @@ readme = "README.adoc"
 bpaf = { version = "0.9.12" }
 color-eyre = { version = "0.6.3", features = ["track-caller", "capture-spantrace", "issue-url"] }
 enum_dispatch = "0.3.13"
-reqwest = { version = "0.12.5", features = ["json", "rustls-tls"], default-features = false }
+reqwest = { version = "0.12.7", features = ["json", "rustls-tls"], default-features = false }
 reqwest-middleware = { version = "0.3.3", default-features = false, features = ["json", "rustls-tls"] }
 reqwest-retry = "0.6.1"
 serde = { version = "1.0.204", features = ["derive"] }
