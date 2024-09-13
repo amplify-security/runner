@@ -1,5 +1,5 @@
 ---
-name: DockerHub Description
+name: Update Docker Hub description
 
 on:
   push:
@@ -9,15 +9,17 @@ on:
 
 jobs:
   update:
-    name: Update
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
-      - name: Update DockerHub Description
+      - name: Convert README.adoc to README.md
+        run: |
+          sudo apt install -y pandoc asciidoctor
+          asciidoctor -b docbook -o - README.adoc | pandoc --wrap=preserve -t gfm -f docbook - > README.md
+      - name: Update Docker Hub description
         uses: peter-evans/dockerhub-description@e98e4d1628a5f3be2be7c231e50981aee98723ae  # v4.0.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
-          readme-filepath: ./README.adoc
           repository: amplifysecurity/runner
