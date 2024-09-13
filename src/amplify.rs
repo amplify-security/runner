@@ -44,13 +44,12 @@ pub async fn get_config(endpoint: String, token: String) -> Result<AmplifyConfig
         .await
         .wrap_err("Failed to complete request for project configuration from Amplify.")?;
     if res.status().is_success() {
-        let mut config_data = res
+        let config_data = res
             .json::<AmplifyConfigResponse>()
             .await
             .wrap_err("Failed to process response body for project configuration from Amplify.")?;
-        // Testing against this repo seems to return no tools, so just default to Semgrep for now.
         if config_data.tools.is_empty() {
-            config_data.tools.insert(0, Tools::Semgrep);
+            return Err(eyre!("Received a configuration with no tools."));
         }
         return Ok(config_data);
     }
