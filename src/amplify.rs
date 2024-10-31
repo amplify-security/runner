@@ -117,7 +117,7 @@ impl ToolActions for Semgrep {
             vec!["apk", "add", "python3", "py3-pip"],
             vec!["mkdir", "/semgrep"],
             vec!["python", "-m", "venv", "/semgrep"],
-            vec!["/semgrep/bin/pip", "install", "semgrep"],
+            vec!["/semgrep/bin/pip", "install", "semgrep==1.93.0"],
         ]
         .into_iter()
         {
