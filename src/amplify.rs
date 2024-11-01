@@ -1,6 +1,7 @@
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
+use std::env;
 use std::process::Stdio;
 use tokio::process::Command;
 
@@ -140,9 +141,11 @@ impl ToolActions for Semgrep {
     async fn launch(&self) -> Result<(ArtifactType, String)> {
         // TODO: Split out command execution grouped output into helper functions
         println!("::group::semgrep ci (scan job)");
+        let search_paths: String = env::var("PATH").expect("Couldn't identify PATH.");
         let semgrep_scan = Command::new("/semgrep/bin/semgrep")
             // When public-api supports SARIF artifact ingestion, just change --json to --sarif here and update the return type
             .args(["ci", "--config", "auto", "--json", "--oss-only"])
+            .env("PATH", format!("{search_paths}:/semgrep/bin"))
             .env("SEMGREP_RULES", ["p/security-audit", "p/secrets"].join(" "))
             .env("SEMGREP_IN_DOCKER", "1")
             .env("SEMGREP_USER_AGENT_APPEND", "Docker")
