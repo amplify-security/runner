@@ -129,8 +129,22 @@ impl ToolActions for Semgrep {
                 .args(&cmd[1..])
                 .spawn()
                 .expect("Failed to launch process.");
-            process.wait().await?;
+            let status = process.wait().await?;
+            let mut success = false;
+            match status.code() {
+                Some(code) => {
+                    if code == 0 {
+                        success = true;
+                    } else {
+                        println!("{:?} returned a non-successful exit code: {code}", cmd_full);
+                    }
+                }
+                None => println!("{:?} was terminated by an external signal.", cmd_full),
+            }
             println!("::endgroup::");
+            if !success {
+                return Err(eyre!("Failed to execute {:?}", cmd_full));
+            }
         }
 
         println!("Completed semgrep installation.");
@@ -156,11 +170,21 @@ impl ToolActions for Semgrep {
         let result = semgrep_scan.wait_with_output().await?;
         println!("Finished Semgrep scan.");
 
+        let mut success = false;
         match result.status.code() {
-            Some(code) => println!("Exited with code {}", code),
-            None => println!("Process terminated by signal."),
+            Some(code) => {
+                if code == 0 {
+                    success = true;
+                } else {
+                    println!("Exited with non-successful exit code: {code}");
+                }
+            }
+            None => println!("Scan was prematurely terminated by an external signal."),
         }
         println!("::endgroup::");
+        if !success {
+            return Err(eyre!("Semgrep scan did not complete successfully."));
+        }
         match String::from_utf8(result.stdout).context("Failed to read stdout from Semgrep.") {
             Ok(out) => Ok((ArtifactType::Json, out)),
             Err(e) => Err(e),
