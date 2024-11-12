@@ -173,7 +173,13 @@ impl ToolActions for Semgrep {
         let mut success = false;
         match result.status.code() {
             Some(code) => {
-                if code == 0 {
+                // Per Semgrep documentation (https://semgrep.dev/docs/cli-reference#exit-codes):
+                //   Semgrep can finish with the following exit codes:
+                //     0: Semgrep ran successfully and found no errors (or did find errors, but the --error flag is not
+                //        being used).
+                //     1: Semgrep ran successfully and found issues in your code (while using the --error flag).
+                // so we can treat 1 as success as well since we get a scan result.
+                if code == 0 || code == 1 {
                     success = true;
                 } else {
                     println!("Exited with non-successful exit code: {code}");
