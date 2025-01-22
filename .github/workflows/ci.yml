@@ -24,14 +24,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: rustup --version
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332   # v4.1.7
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - run: cargo fmt --all -- --check
 
   clippy:
     runs-on: ubuntu-latest
     steps:
       - run: rustup --version
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332   # v4.1.7
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - name: Check for common mistakes with Clippy
         run: cargo clippy --all-targets --all-features -- -Dclippy::all
 
@@ -39,15 +39,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: rustup --version
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332   # v4.1.7
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - name: Check source for typos and spelling issues
-        uses: crate-ci/typos@320b5781474d4470a36b7f0626b131e99850e9d2  # v1.23.2
+        uses: crate-ci/typos@685eb3d55be2f85191e8c84acb9f44d7756f84ab  # v1.29.4
 
   cargo_audit:
     runs-on: ubuntu-latest
     steps:
       - run: rustup --version
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332   # v4.1.7
+      - uses: Swatinem/rust-cache@f0deed1e0edfc6a9be95417288c0e1099b1eeec3  # v2.7.7
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
       - name: Check for security advisories
         run: cargo audit
 
@@ -56,10 +59,33 @@ jobs:
     steps:
       - run: rustup --version
       - name: Cache Cargo registry and dependencies
-        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84  # v2.7.3
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332   # v4.1.7
+        uses: Swatinem/rust-cache@f0deed1e0edfc6a9be95417288c0e1099b1eeec3  # v2.7.7
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - name: cargo generate-lockfile
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
       - name: cargo test --locked
         run: cargo test --locked --all-features
+
+  amplify-integration-test:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      TEST_TAG: "amplifysecurity/runner:test-${{ github.sha }}"
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: docker/setup-buildx-action@6524bf65af31da8d45b59e8c27de4bd072b392f5  # v3.8.0
+      - uses: docker/build-push-action@67a2d409c0a876cbe6b11854e3e25193efe4e62d  # v6.12.0
+        with:
+          context: .
+          load: true
+          tags: ${{ env.TEST_TAG }}
+          network: host
+      - name: Run Amplify Security Scan (Lab)
+        run: |
+          docker run --rm \
+          -v $GITHUB_WORKSPACE:$GITHUB_WORKSPACE -w $GITHUB_WORKSPACE \
+          -v $GITHUB_EVENT_PATH:$GITHUB_EVENT_PATH \
+          -e AMPLIFY_ENDPOINT=https://api.lab.amplify.security \
+          --env-file <(env | grep -P 'ACTIONS|GITHUB') \
+          ${{ env.TEST_TAG }}
