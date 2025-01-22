@@ -1,4 +1,4 @@
-FROM rust:1.81.0-alpine3.20 as builder
+FROM rust:1.84.0-alpine3.21 AS builder
 
 WORKDIR /usr/src/app
 
@@ -9,7 +9,7 @@ COPY src ./src/
 RUN cargo build --release --locked
 RUN strip ./target/release/amplify-runner
 
-FROM alpine:3.20.3
+FROM alpine:3.21.2
 
 RUN apk add --no-cache git
 

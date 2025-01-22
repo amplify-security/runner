@@ -1,6 +1,6 @@
 ---
 name: Amplify Security
-"on":
+on:
   pull_request: {}
   workflow_dispatch: {}
   push:
@@ -12,10 +12,10 @@ permissions:
 
 jobs:
   amplify-security-scan:
+    name: Amplify Security Scan
     runs-on: ubuntu-latest
+    if: (!github.event.pull_request.head.repo.fork && github.actor != 'dependabot[bot]')
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
-      - name: Run Amplify Security Scan (Lab)
+      - name: Amplify Runner
         uses: amplify-security/runner-action@main
-        with:
-          amplify-endpoint: https://api.lab.amplify.security
