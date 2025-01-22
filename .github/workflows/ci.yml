@@ -83,7 +83,7 @@ jobs:
       - name: Run Amplify Security Scan (Lab)
         run: |
           docker run --rm \
-          -v $GITHUB_WORKSPACE:/srv -w /srv \
+          -v $GITHUB_WORKSPACE:$GITHUB_WORKSPACE -w $GITHUB_WORKSPACE \
           -e AMPLIFY_ENDPOINT=https://api.lab.amplify.security \
           --env-file <(env | grep -P 'ACTIONS|GITHUB') \
           ${{ env.TEST_TAG }}
