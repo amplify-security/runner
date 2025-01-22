@@ -2,6 +2,8 @@ use color_eyre::eyre::{eyre, Result, WrapErr};
 use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
 use std::env;
+use std::fs::File;
+use std::io;
 use std::process::Stdio;
 use tokio::process::Command;
 
@@ -112,6 +114,19 @@ pub struct Semgrep {}
 #[derive(Debug, Default)]
 pub struct Uname {}
 
+impl Semgrep {
+    async fn install_rules(&self) -> Result<()> {
+        let body = reqwest::get("https://github.com/amplify-security/opengrep-rules/releases/download/latest/rules.json")
+            .await
+            .wrap_err("Failed to fetch Amplify ruleset for Semgrep.")?
+            .bytes()
+            .await?;
+        let mut rules_file = File::create("/ruleset.json")?;
+        io::copy(&mut body.as_ref(), &mut rules_file)?;
+        Ok(())
+    }
+}
+
 impl ToolActions for Semgrep {
     async fn setup(&self) -> Result<()> {
         for cmd in [
@@ -155,11 +170,12 @@ impl ToolActions for Semgrep {
         // TODO: Split out command execution grouped output into helper functions
         println!("::group::semgrep ci (scan job)");
         let search_paths: String = env::var("PATH").expect("Couldn't identify PATH.");
+        self.install_rules().await?;
         let semgrep_scan = Command::new("/semgrep/bin/semgrep")
             // When public-api supports SARIF artifact ingestion, just change --json to --sarif here and update the return type
-            .args(["ci", "--config", "auto", "--json", "--oss-only"])
+            .args(["ci", "--metrics", "off", "--json", "--oss-only"])
             .env("PATH", format!("{search_paths}:/semgrep/bin"))
-            .env("SEMGREP_RULES", ["p/security-audit", "p/secrets"].join(" "))
+            .env("SEMGREP_RULES", "/ruleset.json")
             .env("SEMGREP_IN_DOCKER", "1")
             .env("SEMGREP_USER_AGENT_APPEND", "Docker")
             .stdout(Stdio::piped())
