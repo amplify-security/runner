@@ -85,4 +85,5 @@ jobs:
           docker run --rm \
           -v $GITHUB_WORKSPACE:/srv -w /srv \
           -e AMPLIFY_ENDPOINT=https://api.lab.amplify.security \
+          --env-file <(env | grep -P 'ACTIONS|GITHUB') \
           ${{ env.TEST_TAG }}
