@@ -95,30 +95,32 @@ pub trait ToolActions {
 
 #[enum_dispatch]
 pub enum Tool {
-    Semgrep,
+    Opengrep,
     Uname,
 }
 
 impl Tool {
     pub fn new_from(tool: Tools) -> Tool {
         match tool {
-            Tools::Semgrep => Tool::Semgrep(Semgrep {}),
+            // Map Semgrep from API to Opengrep. May change later depending on
+            // if Amplify's API retroactively renames the tool for everyone.
+            Tools::Semgrep => Tool::Opengrep(Opengrep {}),
             Tools::Uname => Tool::Uname(Uname {}),
         }
     }
 }
 
 #[derive(Debug, Default)]
-pub struct Semgrep {}
+pub struct Opengrep {}
 
 #[derive(Debug, Default)]
 pub struct Uname {}
 
-impl Semgrep {
+impl Opengrep {
     async fn install_rules(&self) -> Result<()> {
         let body = reqwest::get("https://github.com/amplify-security/opengrep-rules/releases/download/latest/rules.json")
             .await
-            .wrap_err("Failed to fetch Amplify ruleset for Semgrep.")?
+            .wrap_err("Failed to fetch Amplify ruleset for Opengrep.")?
             .bytes()
             .await?;
         let mut rules_file = File::create("/ruleset.json")?;
@@ -127,13 +129,17 @@ impl Semgrep {
     }
 }
 
-impl ToolActions for Semgrep {
+impl ToolActions for Opengrep {
     async fn setup(&self) -> Result<()> {
         for cmd in [
             vec!["apk", "add", "python3", "py3-pip"],
-            vec!["mkdir", "/semgrep"],
-            vec!["python", "-m", "venv", "/semgrep"],
-            vec!["/semgrep/bin/pip", "install", "semgrep==1.99.0"],
+            vec!["mkdir", "/opengrep"],
+            vec!["python", "-m", "venv", "/opengrep"],
+            // https://github.com/opengrep/opengrep/issues/20
+            // PyPI package not yet published (or under Opengrep ownership for
+            // that matter...), but wheels are now being built so install from
+            // there for now.
+            vec!["/opengrep/bin/pip", "install", "https://github.com/opengrep/opengrep/releases/download/v1.0.0-alpha.3/opengrep-1.0.0a1-cp39.cp310.cp311.cp312.cp313.py39.py310.py311.py312.py313-none-musllinux_1_0_x86_64.manylinux2014_x86_64.whl"],
         ]
         .into_iter()
         {
@@ -162,29 +168,29 @@ impl ToolActions for Semgrep {
             }
         }
 
-        println!("Completed semgrep installation.");
+        println!("Completed opengrep installation.");
         Ok(())
     }
 
     async fn launch(&self) -> Result<(ArtifactType, String)> {
         // TODO: Split out command execution grouped output into helper functions
-        println!("::group::semgrep ci (scan job)");
+        println!("::group::opengrep ci (scan job)");
         let search_paths: String = env::var("PATH").expect("Couldn't identify PATH.");
         self.install_rules().await?;
-        let semgrep_scan = Command::new("/semgrep/bin/semgrep")
+        let opengrep_scan = Command::new("/opengrep/bin/opengrep")
             // When public-api supports SARIF artifact ingestion, just change --json to --sarif here and update the return type
             .args(["ci", "--metrics", "off", "--json", "--oss-only"])
-            .env("PATH", format!("{search_paths}:/semgrep/bin"))
+            .env("PATH", format!("{search_paths}:/opengrep/bin"))
             .env("SEMGREP_RULES", "/ruleset.json")
             .env("SEMGREP_IN_DOCKER", "1")
             .env("SEMGREP_USER_AGENT_APPEND", "Docker")
             .stdout(Stdio::piped())
             .spawn()
-            .expect("Failed to start Semgrep scan.");
-        println!("Started Semgrep scan: {:?}", semgrep_scan);
+            .expect("Failed to start Opengrep scan.");
+        println!("Started Opengrep scan: {:?}", opengrep_scan);
 
-        let result = semgrep_scan.wait_with_output().await?;
-        println!("Finished Semgrep scan.");
+        let result = opengrep_scan.wait_with_output().await?;
+        println!("Finished Opengrep scan.");
 
         let mut success = false;
         match result.status.code() {
@@ -205,9 +211,9 @@ impl ToolActions for Semgrep {
         }
         println!("::endgroup::");
         if !success {
-            return Err(eyre!("Semgrep scan did not complete successfully."));
+            return Err(eyre!("Opengrep scan did not complete successfully."));
         }
-        match String::from_utf8(result.stdout).context("Failed to read stdout from Semgrep.") {
+        match String::from_utf8(result.stdout).context("Failed to read stdout from Opengrep.") {
             Ok(out) => Ok((ArtifactType::Json, out)),
             Err(e) => Err(e),
         }
