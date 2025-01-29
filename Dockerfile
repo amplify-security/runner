@@ -20,6 +20,8 @@ RUN apk add --no-cache git
 
 COPY --from=builder /usr/src/app/target/release/amplify-runner /usr/bin/amplify-runner
 # Runner needs to be able to write a ruleset in /, so this creates a writeable file in advance.
-RUN touch /ruleset.json && chmod 777 /ruleset.json
+RUN touch /ruleset.json && chown 1000:1000 /ruleset.json
+# temp opengrep placeholder too
+RUN touch /usr/bin/opengrep && chown 1000:1000 /usr/bin/opengrep && chmod 755 /usr/bin/opengrep
 
 CMD ["/usr/bin/amplify-runner"]

@@ -131,6 +131,8 @@ impl Opengrep {
 
 impl ToolActions for Opengrep {
     async fn setup(&self) -> Result<()> {
+        // Revert the commit that commented this install method once PyPI package has been published.
+        /*
         for cmd in [
             vec!["apk", "add", "python3", "py3-pip"],
             vec!["mkdir", "/opengrep"],
@@ -139,7 +141,7 @@ impl ToolActions for Opengrep {
             // PyPI package not yet published (or under Opengrep ownership for
             // that matter...), but wheels are now being built so install from
             // there for now.
-            vec!["/opengrep/bin/pip", "install", "https://github.com/opengrep/opengrep/releases/download/v1.0.0-alpha.3/opengrep-1.0.0a1-cp39.cp310.cp311.cp312.cp313.py39.py310.py311.py312.py313-none-musllinux_1_0_x86_64.manylinux2014_x86_64.whl"],
+            vec!["/opengrep/bin/pip", "install", ""],
         ]
         .into_iter()
         {
@@ -167,6 +169,15 @@ impl ToolActions for Opengrep {
                 return Err(eyre!("Failed to execute {:?}", cmd_full));
             }
         }
+        */
+        let binary_url = "https://github.com/opengrep/opengrep/releases/download/v1.0.0-alpha.9/opengrep_musllinux_x86";
+        let opengrep_binary = reqwest::get(binary_url)
+            .await
+            .wrap_err("Failed to fetch Opengrep binary.")?
+            .bytes()
+            .await?;
+        let mut binary_file = File::create("/usr/bin/opengrep")?;
+        io::copy(&mut opengrep_binary.as_ref(), &mut binary_file)?;
 
         println!("Completed opengrep installation.");
         Ok(())
@@ -177,7 +188,7 @@ impl ToolActions for Opengrep {
         println!("::group::opengrep ci (scan job)");
         let search_paths: String = env::var("PATH").expect("Couldn't identify PATH.");
         self.install_rules().await?;
-        let opengrep_scan = Command::new("/opengrep/bin/opengrep")
+        let opengrep_scan = Command::new("/usr/bin/opengrep")
             // When public-api supports SARIF artifact ingestion, just change --json to --sarif here and update the return type
             .args(["ci", "--metrics", "off", "--json", "--oss-only"])
             .env("PATH", format!("{search_paths}:/opengrep/bin"))
