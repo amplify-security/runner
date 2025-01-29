@@ -87,5 +87,6 @@ jobs:
           -v $GITHUB_WORKSPACE:$GITHUB_WORKSPACE -w $GITHUB_WORKSPACE \
           -v $GITHUB_EVENT_PATH:$GITHUB_EVENT_PATH \
           -e AMPLIFY_ENDPOINT=https://api.lab.amplify.security \
+          -e RUST_BACKTRACE=full \
           --env-file <(env | grep -P 'ACTIONS|GITHUB') \
           ${{ env.TEST_TAG }}
