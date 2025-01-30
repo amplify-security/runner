@@ -5,6 +5,11 @@ WORKDIR /usr/src/app
 RUN apk add --no-cache musl-dev
 
 COPY Cargo.toml Cargo.lock ./
+# Build trick to cache dependencies in a separate layer before building the whole project
+RUN echo "fn main() {}" > dummy.rs && sed -i 's#src/main.rs#dummy.rs#' Cargo.toml
+RUN cargo build --release
+RUN sed -i 's#dummy.rs#src/main.rs#' Cargo.toml && rm dummy.rs
+# End of build trick
 COPY src ./src/
 RUN cargo build --release --locked
 RUN strip ./target/release/amplify-runner
