@@ -1,6 +1,8 @@
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use enum_dispatch::enum_dispatch;
+use hex_literal::hex;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::env;
 use std::fs::File;
 use std::io;
@@ -171,12 +173,21 @@ impl ToolActions for Opengrep {
         }
         */
         let binary_url = "https://github.com/opengrep/opengrep/releases/download/v1.0.0-alpha.9/opengrep_musllinux_x86";
+        let binary_hash = hex!("1b640cfda7253bb17d79736acaab50028d58db90bd85521d27aa107f1fdc891d");
         let opengrep_binary = reqwest::get(binary_url)
             .await
             .wrap_err("Failed to fetch Opengrep binary.")?
             .bytes()
             .await?;
         let mut binary_file = File::create("/usr/bin/opengrep")?;
+        let mut hasher = Sha256::new();
+        hasher.update(&opengrep_binary);
+        let hash = hasher.finalize();
+        if hash[..] != binary_hash[..] {
+            return Err(eyre!(
+                "Downloaded Opengrep binary failed checksum verification."
+            ));
+        }
         io::copy(&mut opengrep_binary.as_ref(), &mut binary_file)?;
 
         println!("Completed opengrep installation.");
