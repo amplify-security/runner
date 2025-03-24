@@ -133,47 +133,9 @@ impl Opengrep {
 
 impl ToolActions for Opengrep {
     async fn setup(&self) -> Result<()> {
-        // Revert the commit that commented this install method once PyPI package has been published.
-        /*
-        for cmd in [
-            vec!["apk", "add", "python3", "py3-pip"],
-            vec!["mkdir", "/opengrep"],
-            vec!["python", "-m", "venv", "/opengrep"],
-            // https://github.com/opengrep/opengrep/issues/20
-            // PyPI package not yet published (or under Opengrep ownership for
-            // that matter...), but wheels are now being built so install from
-            // there for now.
-            vec!["/opengrep/bin/pip", "install", ""],
-        ]
-        .into_iter()
-        {
-            let cmd_full = cmd.join(" ");
-            println!("::group::{}", cmd_full);
-            println!("RUN: {:?}\n", cmd_full);
-            let mut process = Command::new(cmd[0])
-                .args(&cmd[1..])
-                .spawn()
-                .expect("Failed to launch process.");
-            let status = process.wait().await?;
-            let mut success = false;
-            match status.code() {
-                Some(code) => {
-                    if code == 0 {
-                        success = true;
-                    } else {
-                        println!("{:?} returned a non-successful exit code: {code}", cmd_full);
-                    }
-                }
-                None => println!("{:?} was terminated by an external signal.", cmd_full),
-            }
-            println!("::endgroup::");
-            if !success {
-                return Err(eyre!("Failed to execute {:?}", cmd_full));
-            }
-        }
-        */
-        let binary_url = "https://github.com/opengrep/opengrep/releases/download/v1.0.0-alpha.9/opengrep_musllinux_x86";
-        let binary_hash = hex!("1b640cfda7253bb17d79736acaab50028d58db90bd85521d27aa107f1fdc891d");
+        println!("::group::opengrep install");
+        let binary_url = "https://github.com/opengrep/opengrep/releases/download/v1.0.1/opengrep_musllinux_x86";
+        let binary_hash = hex!("e129f57483a6d10e20d1ec12cbfbdc676be370131640f8485b30524edbd4e315");
         let opengrep_binary = reqwest::get(binary_url)
             .await
             .wrap_err("Failed to fetch Opengrep binary.")?
@@ -191,6 +153,7 @@ impl ToolActions for Opengrep {
         io::copy(&mut opengrep_binary.as_ref(), &mut binary_file)?;
 
         println!("Completed opengrep installation.");
+        println!("::endgroup::");
         Ok(())
     }
 
