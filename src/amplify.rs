@@ -9,6 +9,12 @@ use std::io;
 use std::process::Stdio;
 use tokio::process::Command;
 
+const OPENGREP_VERSION: &str = "1.0.1";
+const OPENGREP_CHECKSUM: [u8; 32] =
+    hex!("e129f57483a6d10e20d1ec12cbfbdc676be370131640f8485b30524edbd4e315");
+const OPENGREP_RULES_URI: &str =
+    "https://github.com/amplify-security/opengrep-rules/releases/download/latest/rules.json";
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AmplifyConfigResponse {
     pub tools: Vec<Tools>,
@@ -120,7 +126,7 @@ pub struct Uname {}
 
 impl Opengrep {
     async fn install_rules(&self) -> Result<()> {
-        let body = reqwest::get("https://github.com/amplify-security/opengrep-rules/releases/download/latest/rules.json")
+        let body = reqwest::get(OPENGREP_RULES_URI)
             .await
             .wrap_err("Failed to fetch Amplify ruleset for Opengrep.")?
             .bytes()
@@ -134,8 +140,12 @@ impl Opengrep {
 impl ToolActions for Opengrep {
     async fn setup(&self) -> Result<()> {
         println!("::group::opengrep install");
-        let binary_url = "https://github.com/opengrep/opengrep/releases/download/v1.0.1/opengrep_musllinux_x86";
-        let binary_hash = hex!("e129f57483a6d10e20d1ec12cbfbdc676be370131640f8485b30524edbd4e315");
+        let binary_url = format!(
+            "https://github.com/{repository}/releases/download/v{version}/{binary_name}",
+            repository = "opengrep/opengrep",
+            version = OPENGREP_VERSION,
+            binary_name = "opengrep_musllinux_x86"
+        );
         let opengrep_binary = reqwest::get(binary_url)
             .await
             .wrap_err("Failed to fetch Opengrep binary.")?
@@ -145,7 +155,7 @@ impl ToolActions for Opengrep {
         let mut hasher = Sha256::new();
         hasher.update(&opengrep_binary);
         let hash = hasher.finalize();
-        if hash[..] != binary_hash[..] {
+        if hash[..] != OPENGREP_CHECKSUM[..] {
             return Err(eyre!(
                 "Downloaded Opengrep binary failed checksum verification."
             ));
