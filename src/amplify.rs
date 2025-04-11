@@ -9,9 +9,9 @@ use std::io;
 use std::process::Stdio;
 use tokio::process::Command;
 
-const OPENGREP_VERSION: &str = "1.0.1";
+const OPENGREP_VERSION: &str = "1.1.3";
 const OPENGREP_CHECKSUM: [u8; 32] =
-    hex!("e129f57483a6d10e20d1ec12cbfbdc676be370131640f8485b30524edbd4e315");
+    hex!("674c39fd026dc30778534b128a5cec564b763c6c04c274f611c53a6cd79fe5ae");
 const OPENGREP_RULES_URI: &str =
     "https://github.com/amplify-security/opengrep-rules/releases/download/latest/rules.json";
 
