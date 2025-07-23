@@ -182,7 +182,7 @@ impl ToolActions for Opengrep {
             .stdout(Stdio::piped())
             .spawn()
             .expect("Failed to start Opengrep scan.");
-        println!("Started Opengrep scan: {:?}", opengrep_scan);
+        println!("Started Opengrep scan: {opengrep_scan:?}");
 
         let result = opengrep_scan.wait_with_output().await?;
         println!("Finished Opengrep scan.");
