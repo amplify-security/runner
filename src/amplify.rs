@@ -174,7 +174,7 @@ impl ToolActions for Opengrep {
         self.install_rules().await?;
         let opengrep_scan = Command::new("/usr/bin/opengrep")
             // When public-api supports SARIF artifact ingestion, just change --json to --sarif here and update the return type
-            .args(["ci", "--metrics", "off", "--json", "--oss-only"])
+            .args(["ci", "--json", "--oss-only"])
             .env("PATH", format!("{search_paths}:/opengrep/bin"))
             .env("SEMGREP_RULES", "/ruleset.json")
             .env("SEMGREP_IN_DOCKER", "1")
