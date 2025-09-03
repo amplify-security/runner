@@ -15,8 +15,8 @@ color-eyre = { version = "0.6.3", features = ["track-caller", "capture-spantrace
 enum_dispatch = "0.3.13"
 hex-literal = "0.4.1"
 reqwest = { version = "0.12.7", features = ["json", "rustls-tls"], default-features = false }
-reqwest-middleware = { version = "0.3.3", default-features = false, features = ["json", "rustls-tls"] }
-reqwest-retry = "0.6.1"
+reqwest-middleware = { version = "0.4.2", default-features = false, features = ["json", "rustls-tls"] }
+reqwest-retry = "0.7.0"
 serde = { version = "1.0.204", features = ["derive"] }
 sha2 = "0.10.8"
 thiserror = "1.0.63"
