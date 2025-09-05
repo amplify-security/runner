@@ -9,9 +9,10 @@ use std::io;
 use std::process::Stdio;
 use tokio::process::Command;
 
-const OPENGREP_VERSION: &str = "1.8.6";
+const OPENGREP_VERSION: &str = "1.9.1";
+// opengrep_musllinux_x86 from https://github.com/opengrep/opengrep/releases
 const OPENGREP_CHECKSUM: [u8; 32] =
-    hex!("85eef704c67da2b1fd3e4c9ee1f7614edf5d7281bfbab96e5e9d3ca308e39d1f");
+    hex!("d2ccdaf540b865b8bd54902b2c7e66dc5893e13577ff50eb0fb278ca60ef8500");
 const OPENGREP_RULES_URI: &str =
     "https://github.com/amplify-security/opengrep-rules/releases/download/latest/rules.json";
 
@@ -91,7 +92,8 @@ pub async fn submit_artifact(
     }
 
     Err(eyre!(
-        "Received a non-successful HTTP response when submitting artifact to Amplify."
+        "Received a non-successful {} HTTP response when submitting artifact to Amplify.",
+        res.status().as_str()
     ))
 }
 
