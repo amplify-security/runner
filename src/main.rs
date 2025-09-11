@@ -73,6 +73,8 @@ async fn main() -> Result<ExitCode> {
             amplify::get_config(endpoint.to_owned(), amplify_token.to_owned()).await?
         };
 
+        let code_lines = amplify::get_code_lines();
+
         for tool_name in config.tools.into_iter() {
             let tool = Tool::new_from(tool_name);
             tool.setup().await?;
@@ -82,6 +84,7 @@ async fn main() -> Result<ExitCode> {
                 amplify_token.to_owned(),
                 tool_output,
                 tool_output_type,
+                code_lines,
             )
             .await?;
         }
