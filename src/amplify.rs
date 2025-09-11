@@ -57,7 +57,7 @@ pub fn get_code_lines() -> usize {
     let mut languages = Languages::new();
     languages.get_statistics(paths, exclude, &config);
     let total = Languages::total(&languages);
-    return total.code;
+    total.code
 }
 
 pub async fn get_config(endpoint: String, token: String) -> Result<AmplifyConfigResponse> {
