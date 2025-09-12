@@ -7,6 +7,7 @@ use std::env;
 use std::fs::File;
 use std::io;
 use std::process::Stdio;
+use tokei::{Config, Languages};
 use tokio::process::Command;
 
 const OPENGREP_VERSION: &str = "1.9.1";
@@ -15,6 +16,8 @@ const OPENGREP_CHECKSUM: [u8; 32] =
     hex!("d2ccdaf540b865b8bd54902b2c7e66dc5893e13577ff50eb0fb278ca60ef8500");
 const OPENGREP_RULES_URI: &str =
     "https://github.com/amplify-security/opengrep-rules/releases/download/latest/rules.json";
+
+const HEADER_X_AMPLIFY_CODE_LINES: &str = "X-Amplify-Code-Lines";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AmplifyConfigResponse {
@@ -47,6 +50,16 @@ impl ArtifactType {
     }
 }
 
+pub fn get_code_lines() -> usize {
+    let paths = &["."];
+    let exclude = &[];
+    let config = Config::default();
+    let mut languages = Languages::new();
+    languages.get_statistics(paths, exclude, &config);
+    let total = Languages::total(&languages);
+    total.code
+}
+
 pub async fn get_config(endpoint: String, token: String) -> Result<AmplifyConfigResponse> {
     let client = crate::common::new_http_client();
     let res = client
@@ -76,11 +89,13 @@ pub async fn submit_artifact(
     token: String,
     artifact: String,
     artifact_type: ArtifactType,
+    code_lines: usize,
 ) -> Result<()> {
     let client = crate::common::new_http_client();
     let res = client
         .put(format!("{url}/v1.0/artifact", url = &endpoint))
         .header(reqwest::header::CONTENT_TYPE, artifact_type.as_str())
+        .header(HEADER_X_AMPLIFY_CODE_LINES, code_lines.to_string())
         .bearer_auth(&token)
         .body(artifact)
         .send()
