@@ -10,10 +10,10 @@ use std::process::Stdio;
 use tokei::{Config, Languages};
 use tokio::process::Command;
 
-const OPENGREP_VERSION: &str = "1.9.1";
+const OPENGREP_VERSION: &str = "1.11.4";
 // opengrep_musllinux_x86 from https://github.com/opengrep/opengrep/releases
 const OPENGREP_CHECKSUM: [u8; 32] =
-    hex!("d2ccdaf540b865b8bd54902b2c7e66dc5893e13577ff50eb0fb278ca60ef8500");
+    hex!("ad41b06d42991fce6db523067eb5e0de3eabb7d2df7ecfb589adad2d1e9952ef");
 const OPENGREP_RULES_URI: &str =
     "https://github.com/amplify-security/opengrep-rules/releases/download/latest/rules.json";
 
@@ -191,7 +191,7 @@ impl ToolActions for Opengrep {
         self.install_rules().await?;
         let opengrep_scan = Command::new("/usr/bin/opengrep")
             // When public-api supports SARIF artifact ingestion, just change --json to --sarif here and update the return type
-            .args(["ci", "--json", "--oss-only"])
+            .args(["ci", "--json", "--oss-only", "--taint-intrafile"])
             .env("PATH", format!("{search_paths}:/opengrep/bin"))
             .env("SEMGREP_RULES", "/ruleset.json")
             .env("SEMGREP_IN_DOCKER", "1")
