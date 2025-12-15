@@ -10,10 +10,10 @@ use std::process::Stdio;
 use tokei::{Config, Languages};
 use tokio::process::Command;
 
-const OPENGREP_VERSION: &str = "1.12.1";
+const OPENGREP_VERSION: &str = "1.13.1";
 // opengrep_musllinux_x86 from https://github.com/opengrep/opengrep/releases
 const OPENGREP_CHECKSUM: [u8; 32] =
-    hex!("13a0a121549f59295d2a1554ffd9593a9c18e093db6eded4d6f5f637662cdae1");
+    hex!("322fb497d39b89f6a2af2c590284fb8e3d7f58d447954a8f32cf14a431faac39");
 const OPENGREP_RULES_URI: &str =
     "https://github.com/amplify-security/opengrep-rules/releases/download/latest/rules.json";
 
