@@ -174,7 +174,9 @@ impl ToolActions for Opengrep {
         let hash = hasher.finalize();
         if hash[..] != OPENGREP_CHECKSUM[..] {
             return Err(eyre!(
-                "Downloaded Opengrep binary failed checksum verification."
+                "Downloaded Opengrep binary failed checksum verification. Expected {:x?}, got {:x?}.",
+                OPENGREP_CHECKSUM,
+                hash.as_slice()
             ));
         }
         io::copy(&mut opengrep_binary.as_ref(), &mut binary_file)?;
