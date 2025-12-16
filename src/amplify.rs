@@ -163,22 +163,25 @@ impl ToolActions for Opengrep {
             version = OPENGREP_VERSION,
             binary_name = "opengrep_musllinux_x86"
         );
+        println!("Fetching Opengrep binary from {binary_url}.");
         let opengrep_binary = reqwest::get(binary_url)
             .await
             .wrap_err("Failed to fetch Opengrep binary.")?
             .bytes()
             .await?;
-        let mut binary_file = File::create("/usr/bin/opengrep")?;
+        println!("Verifying Opengrep binary checksum.");
         let mut hasher = Sha256::new();
         hasher.update(&opengrep_binary);
         let hash = hasher.finalize();
         if hash[..] != OPENGREP_CHECKSUM[..] {
             return Err(eyre!(
-                "Downloaded Opengrep binary failed checksum verification. Expected {:x?}, got {:x?}.",
-                OPENGREP_CHECKSUM,
-                hash.as_slice()
+                "Opengrep binary failed checksum verification. Expected {}, got {}.",
+                const_hex::display(&OPENGREP_CHECKSUM),
+                const_hex::display(&hash)
             ));
         }
+        println!("Creating /usr/bin/opengrep.");
+        let mut binary_file = File::create("/usr/bin/opengrep")?;
         io::copy(&mut opengrep_binary.as_ref(), &mut binary_file)?;
 
         println!("Completed opengrep installation.");
