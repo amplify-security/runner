@@ -10,10 +10,10 @@ use std::process::Stdio;
 use tokei::{Config, Languages};
 use tokio::process::Command;
 
-const OPENGREP_VERSION: &str = "1.12.1";
+const OPENGREP_VERSION: &str = "1.13.1";
 // opengrep_musllinux_x86 from https://github.com/opengrep/opengrep/releases
 const OPENGREP_CHECKSUM: [u8; 32] =
-    hex!("13a0a121549f59295d2a1554ffd9593a9c18e093db6eded4d6f5f637662cdae1");
+    hex!("322fb497d39b89f6a2af2c590284fb8e3d7f58d447954a8f32cf14a431faac39");
 const OPENGREP_RULES_URI: &str =
     "https://github.com/amplify-security/opengrep-rules/releases/download/latest/rules.json";
 
@@ -163,20 +163,25 @@ impl ToolActions for Opengrep {
             version = OPENGREP_VERSION,
             binary_name = "opengrep_musllinux_x86"
         );
+        println!("Fetching Opengrep binary from {binary_url}.");
         let opengrep_binary = reqwest::get(binary_url)
             .await
             .wrap_err("Failed to fetch Opengrep binary.")?
             .bytes()
             .await?;
-        let mut binary_file = File::create("/usr/bin/opengrep")?;
+        println!("Verifying Opengrep binary checksum.");
         let mut hasher = Sha256::new();
         hasher.update(&opengrep_binary);
         let hash = hasher.finalize();
         if hash[..] != OPENGREP_CHECKSUM[..] {
             return Err(eyre!(
-                "Downloaded Opengrep binary failed checksum verification."
+                "Opengrep binary failed checksum verification. Expected {}, got {}.",
+                const_hex::display(&OPENGREP_CHECKSUM),
+                const_hex::display(&hash)
             ));
         }
+        println!("Creating /usr/bin/opengrep.");
+        let mut binary_file = File::create("/usr/bin/opengrep")?;
         io::copy(&mut opengrep_binary.as_ref(), &mut binary_file)?;
 
         println!("Completed opengrep installation.");
