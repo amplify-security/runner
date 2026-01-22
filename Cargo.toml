@@ -15,6 +15,7 @@ color-eyre = { version = "0.6.5", features = ["track-caller", "capture-spantrace
 const-hex = "1.17.0"
 enum_dispatch = "0.3.13"
 hex-literal = "1.1.0"
+jsonwebtoken = { version = "10.2.0", features = ["aws_lc_rs"] }
 reqwest = { version = "0.12.7", features = ["json", "rustls-tls"], default-features = false }
 reqwest-middleware = { version = "0.4.2", default-features = false, features = ["json", "rustls-tls"] }
 reqwest-retry = "0.7.0"
