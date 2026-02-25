@@ -81,12 +81,14 @@ impl TpkJwt {
     }
 
     /// Override the `iss` (issuer) claim. Returns `self` for chaining.
+    #[allow(dead_code)]
     pub fn with_issuer(mut self, issuer: impl Into<String>) -> Self {
         self.issuer = issuer.into();
         self
     }
 
     /// Override the `aud` (audience) claim. Returns `self` for chaining.
+    #[allow(dead_code)]
     pub fn with_audience(mut self, audience: impl Into<String>) -> Self {
         self.audience = audience.into();
         self
@@ -145,12 +147,6 @@ mod tests {
     use super::*;
     use jsonwebtoken::{decode, DecodingKey, Validation};
     use serde::{Deserialize, Serialize};
-    use std::sync::Mutex;
-
-    // Serialise all environment-variable mutations to prevent data races
-    // between tests that run in parallel within the same process.
-    static ENV_MUTEX: Mutex<()> = Mutex::new(());
-
     // Paths are relative to this source file:
     //   runner/src/auth/tpk/mod.rs  →  runner/
     const TEST_PRIVATE_KEY_PEM: &str = include_str!("../../../ecdsa-p521-local.private.pem");
@@ -341,27 +337,31 @@ mod tests {
     }
 
     // ── from_env ──────────────────────────────────────────────────────────
+    //
+    // These tests are async so they can share the crate-wide ENV_MUTEX
+    // (tokio::sync::Mutex) with the gitlab tests, preventing races when both
+    // suites run in parallel and manipulate TRUSTED_PRIVATE_KEY.
 
-    #[test]
-    fn test_from_env_returns_none_when_var_absent() {
-        let _lock = ENV_MUTEX.lock().unwrap();
+    #[tokio::test]
+    async fn test_from_env_returns_none_when_var_absent() {
+        let _lock = crate::common::test_support::ENV_MUTEX.lock().await;
         std::env::remove_var("TRUSTED_PRIVATE_KEY");
         let result = TpkJwt::from_env().unwrap();
         assert!(result.is_none());
     }
 
-    #[test]
-    fn test_from_env_returns_signer_when_var_is_valid_key() {
-        let _lock = ENV_MUTEX.lock().unwrap();
+    #[tokio::test]
+    async fn test_from_env_returns_signer_when_var_is_valid_key() {
+        let _lock = crate::common::test_support::ENV_MUTEX.lock().await;
         std::env::set_var("TRUSTED_PRIVATE_KEY", TEST_PRIVATE_KEY_PEM);
         let result = TpkJwt::from_env().unwrap();
         assert!(result.is_some());
         std::env::remove_var("TRUSTED_PRIVATE_KEY");
     }
 
-    #[test]
-    fn test_from_env_errors_on_invalid_pem() {
-        let _lock = ENV_MUTEX.lock().unwrap();
+    #[tokio::test]
+    async fn test_from_env_errors_on_invalid_pem() {
+        let _lock = crate::common::test_support::ENV_MUTEX.lock().await;
         std::env::set_var("TRUSTED_PRIVATE_KEY", "not-a-valid-pem");
         let result = TpkJwt::from_env();
         assert!(result.is_err(), "an invalid PEM should produce an error");

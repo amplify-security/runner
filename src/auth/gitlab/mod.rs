@@ -116,11 +116,6 @@ impl GitlabTpkClaims {
 mod tests {
     use super::*;
     use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
-    use std::sync::Mutex;
-
-    // Serialise all environment-variable mutations to prevent data races
-    // between tests that run in parallel within the same process.
-    static ENV_MUTEX: Mutex<()> = Mutex::new(());
 
     const TEST_PRIVATE_KEY_PEM: &str = include_str!("../../../ecdsa-p521-local.private.pem");
     const TEST_PUBLIC_KEY_PEM: &str = include_str!("../../../ecdsa-p521-local.public.pem");
@@ -157,7 +152,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_amplify_id_token_is_returned_directly() {
-        let _lock = ENV_MUTEX.lock().unwrap();
+        let _lock = crate::common::test_support::ENV_MUTEX.lock().await;
         clear_all_vars();
         std::env::set_var("AMPLIFY_ID_TOKEN", "gitlab.issued.token");
 
@@ -169,7 +164,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_amplify_id_token_is_cached_on_auth_struct() {
-        let _lock = ENV_MUTEX.lock().unwrap();
+        let _lock = crate::common::test_support::ENV_MUTEX.lock().await;
         clear_all_vars();
         std::env::set_var("AMPLIFY_ID_TOKEN", "cached.token");
 
@@ -183,7 +178,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_tpk_fallback_produces_valid_jwt() {
-        let _lock = ENV_MUTEX.lock().unwrap();
+        let _lock = crate::common::test_support::ENV_MUTEX.lock().await;
         clear_all_vars();
         set_all_gitlab_vars();
         std::env::set_var("TRUSTED_PRIVATE_KEY", TEST_PRIVATE_KEY_PEM);
@@ -207,7 +202,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_tpk_fallback_uses_correct_issuer_and_audience() {
-        let _lock = ENV_MUTEX.lock().unwrap();
+        let _lock = crate::common::test_support::ENV_MUTEX.lock().await;
         clear_all_vars();
         set_all_gitlab_vars();
         std::env::set_var("TRUSTED_PRIVATE_KEY", TEST_PRIVATE_KEY_PEM);
@@ -226,7 +221,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_tpk_fallback_token_is_cached_on_auth_struct() {
-        let _lock = ENV_MUTEX.lock().unwrap();
+        let _lock = crate::common::test_support::ENV_MUTEX.lock().await;
         clear_all_vars();
         set_all_gitlab_vars();
         std::env::set_var("TRUSTED_PRIVATE_KEY", TEST_PRIVATE_KEY_PEM);
@@ -241,7 +236,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_error_when_neither_token_source_is_available() {
-        let _lock = ENV_MUTEX.lock().unwrap();
+        let _lock = crate::common::test_support::ENV_MUTEX.lock().await;
         clear_all_vars();
 
         let mut auth = GitlabAuth::new().unwrap();
@@ -255,7 +250,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_error_when_tpk_present_but_ci_var_missing() {
-        let _lock = ENV_MUTEX.lock().unwrap();
+        let _lock = crate::common::test_support::ENV_MUTEX.lock().await;
 
         // Each predefined GitLab CI variable is required; verify that omitting
         // any one of them produces an error.
