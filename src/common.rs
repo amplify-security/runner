@@ -27,3 +27,10 @@ impl RetryableStrategy for DefaultRetryStrategyWith401 {
         }
     }
 }
+
+/// Shared utilities for tests across the crate.
+#[cfg(test)]
+pub(crate) mod test_support {
+    /// Async mutex used by every test that reads or writes env vars.
+    pub(crate) static ENV_MUTEX: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+}
