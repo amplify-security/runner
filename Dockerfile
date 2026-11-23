@@ -12,7 +12,6 @@ RUN sed -i 's#dummy.rs#src/main.rs#' Cargo.toml && rm dummy.rs
 # End of build trick
 COPY src ./src/
 RUN cargo build --release --locked
-RUN strip ./target/release/amplify-runner
 
 FROM alpine:3.22.1
 
