@@ -90,6 +90,9 @@ jobs:
           load: true
           tags: ${{ env.TEST_TAG }}
           network: host
+          cache-from: type=gha
+        env:
+          SOURCE_DATE_EPOCH: 0
       - name: Run Amplify Security Scan (Lab)
         run: |
           docker run --rm \
